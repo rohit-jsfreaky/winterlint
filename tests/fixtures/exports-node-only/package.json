@@ -1,0 +1,8 @@
+{
+  "name": "fixture-exports-node-only",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "node-only-exports": "1.0.0"
+  }
+}

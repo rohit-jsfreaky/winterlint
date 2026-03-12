@@ -1,0 +1,76 @@
+{
+  "name": "winterlint",
+  "version": "0.1.0",
+  "description": "Runtime portability analyzer for modern JavaScript runtimes.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "winterlint": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./eslint": {
+      "types": "./dist/eslint/index.d.ts",
+      "import": "./dist/eslint/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md",
+    "docs"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "clean": "if exist dist rmdir /s /q dist",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "npm run lint && npm run typecheck && npm run test",
+    "prepare": "npm run build"
+  },
+  "keywords": [
+    "runtime",
+    "portability",
+    "edge",
+    "wintertc",
+    "eslint",
+    "cli",
+    "analysis"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/example/winterlint.git"
+  },
+  "author": "",
+  "dependencies": {
+    "@babel/parser": "^7.28.0",
+    "@babel/traverse": "^7.28.0",
+    "commander": "^14.0.0",
+    "fast-glob": "^3.3.3",
+    "picomatch": "^4.0.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.38.0",
+    "@types/babel__traverse": "^7.28.0",
+    "@types/node": "^22.18.0",
+    "@types/picomatch": "^4.0.2",
+    "@typescript-eslint/eslint-plugin": "^8.46.0",
+    "@typescript-eslint/parser": "^8.46.0",
+    "eslint": "^9.38.0",
+    "globals": "^16.4.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}

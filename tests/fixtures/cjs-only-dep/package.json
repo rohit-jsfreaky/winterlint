@@ -1,0 +1,8 @@
+{
+  "name": "fixture-cjs-only-dep",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "legacy-cjs": "1.0.0"
+  }
+}
