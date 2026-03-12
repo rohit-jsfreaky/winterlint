@@ -11,6 +11,10 @@ function severityGlyph(severity: string): string {
   return 'I';
 }
 
+function sortedEntries(record: Record<string, number>): Array<[string, number]> {
+  return Object.entries(record).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+}
+
 export function formatPrettyReport(context: ReportContext): string {
   const { result } = context;
   const lines: string[] = [];
@@ -18,12 +22,28 @@ export function formatPrettyReport(context: ReportContext): string {
   lines.push(`winterlint ${result.metadata.version}`);
   lines.push(`Analyzed: ${result.metadata.analyzedPath}`);
   lines.push(`Targets: ${result.metadata.targets.join(', ')}`);
+  if (result.metadata.configPath) {
+    lines.push(`Config: ${result.metadata.configPath}`);
+  }
   lines.push('');
 
   lines.push(
     `Summary: ${result.summary.totalIssues} issues ` +
       `(error: ${result.summary.bySeverity.error}, warn: ${result.summary.bySeverity.warn}, info: ${result.summary.bySeverity.info})`
   );
+
+  const topCategories = sortedEntries(result.summary.byCategory).slice(0, 5);
+  if (topCategories.length > 0) {
+    lines.push(`Top categories: ${topCategories.map(([name, count]) => `${name}=${count}`).join(', ')}`);
+  }
+
+  if (result.summary.topOffendingPackages.length > 0) {
+    lines.push(`Top packages: ${result.summary.topOffendingPackages.map((item) => `${item.name}=${item.count}`).join(', ')}`);
+  }
+
+  if (result.summary.topOffendingFiles.length > 0) {
+    lines.push(`Top files: ${result.summary.topOffendingFiles.map((item) => `${path.relative(result.metadata.analyzedPath, item.path)}=${item.count}`).join(', ')}`);
+  }
 
   lines.push('Runtime Matrix:');
   for (const row of result.runtimeMatrix) {

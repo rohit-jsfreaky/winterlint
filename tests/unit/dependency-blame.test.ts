@@ -13,5 +13,7 @@ describe('dependency blame', () => {
     expect(depIssue).toBeTruthy();
     expect(depIssue?.dependencyBlame?.offendingPackage).toBe('dep-b');
     expect(depIssue?.dependencyBlame?.chain.join('->')).toContain('dep-a');
+    expect(depIssue?.dependencyBlame?.chain[0]).toBe('fixture-transitive-node-only');
   });
 });
+

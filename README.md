@@ -296,7 +296,7 @@ High-level shape:
   "metadata": {
     "analyzedPath": "...",
     "generatedAt": "...",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "targets": ["node", "cloudflare-workers"],
     "configUsed": {}
   },
@@ -528,3 +528,4 @@ See [docs/releasing.md](./docs/releasing.md) for release workflow.
 ## License
 
 MIT
+

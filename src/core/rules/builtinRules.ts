@@ -113,7 +113,7 @@ const nodeBuiltinImportRule: RuleDefinition = {
               },
               dependencyBlame: sourceType === 'dependency' && packageName && chain
                 ? {
-                    rootProject: chain[0] ?? 'root',
+                    rootProject: context.rootProjectName,
                     chain,
                     offendingPackage: packageName,
                     offendingFile: signal.filePath
@@ -184,7 +184,7 @@ const filesystemRule: RuleDefinition = {
               },
               dependencyBlame: sourceType === 'dependency' && packageName && chain
                 ? {
-                    rootProject: chain[0] ?? 'root',
+                    rootProject: context.rootProjectName,
                     chain,
                     offendingPackage: packageName,
                     offendingFile: signal.filePath
@@ -482,8 +482,8 @@ const commonJsEntrypointRule: RuleDefinition = {
               column: 0
             },
             dependencyBlame: {
-              rootProject: 'project',
-              chain: ['project', pkg.packageName],
+              rootProject: context.rootProjectName,
+              chain: pkg.chain ?? [context.rootProjectName, pkg.packageName],
               offendingPackage: pkg.packageName,
               exportPath: pkg.entryFile
             }
@@ -534,8 +534,8 @@ const nativeAddonRule: RuleDefinition = {
               column: 0
             },
             dependencyBlame: {
-              rootProject: 'project',
-              chain: ['project', pkg.packageName],
+              rootProject: context.rootProjectName,
+              chain: pkg.chain ?? [context.rootProjectName, pkg.packageName],
               offendingPackage: pkg.packageName
             }
           },
@@ -857,8 +857,8 @@ const exportsConditionRule: RuleDefinition = {
               column: 0
             },
             dependencyBlame: {
-              rootProject: 'project',
-              chain: ['project', pkg.packageName],
+              rootProject: context.rootProjectName,
+              chain: pkg.chain ?? [context.rootProjectName, pkg.packageName],
               offendingPackage: pkg.packageName,
               exportPath: pkg.entryFile
             }
@@ -909,7 +909,7 @@ const dependencyBuiltinRule: RuleDefinition = {
                 column: imp.column
               },
               dependencyBlame: {
-                rootProject: dep.chain[0] ?? 'project',
+                rootProject: context.rootProjectName,
                 chain: dep.chain,
                 offendingPackage: dep.packageName,
                 offendingFile: dep.signal.filePath
@@ -979,4 +979,7 @@ export function findRule(ruleId: string): RuleDefinition | undefined {
 export function listRuleMeta() {
   return RULES.map((rule) => rule.meta);
 }
+
+
+
 

@@ -7,6 +7,7 @@ export interface RuleContext {
   packageSignals: PackageSignal[];
   targets: RuntimeTarget[];
   severityOverrides: Record<string, Severity>;
+  rootProjectName: string;
 }
 
 export interface RuleDefinition {

@@ -1,6 +1,12 @@
 import path from 'node:path';
 import { ReportContext } from '../types.js';
 
+function topRecord(record: Record<string, number>, limit = 5): Array<[string, number]> {
+  return Object.entries(record)
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, limit);
+}
+
 export function formatMarkdownReport(context: ReportContext): string {
   const { result } = context;
   const lines: string[] = [];
@@ -12,7 +18,35 @@ export function formatMarkdownReport(context: ReportContext): string {
   lines.push(
     `- Summary: ${result.summary.totalIssues} issues (error: ${result.summary.bySeverity.error}, warn: ${result.summary.bySeverity.warn}, info: ${result.summary.bySeverity.info})`
   );
+  if (result.metadata.configPath) {
+    lines.push(`- Config: \`${result.metadata.configPath}\``);
+  }
   lines.push('');
+
+  const topCategories = topRecord(result.summary.byCategory);
+  if (topCategories.length > 0) {
+    lines.push('## Top Categories');
+    for (const [category, count] of topCategories) {
+      lines.push(`- ${category}: ${count}`);
+    }
+    lines.push('');
+  }
+
+  if (result.summary.topOffendingPackages.length > 0) {
+    lines.push('## Top Offending Packages');
+    for (const item of result.summary.topOffendingPackages) {
+      lines.push(`- ${item.name}: ${item.count}`);
+    }
+    lines.push('');
+  }
+
+  if (result.summary.topOffendingFiles.length > 0) {
+    lines.push('## Top Offending Files');
+    for (const item of result.summary.topOffendingFiles) {
+      lines.push(`- ${path.relative(result.metadata.analyzedPath, item.path)}: ${item.count}`);
+    }
+    lines.push('');
+  }
 
   lines.push('## Runtime Matrix');
   for (const row of result.runtimeMatrix) {

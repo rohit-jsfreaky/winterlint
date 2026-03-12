@@ -1,6 +1,6 @@
 {
   "name": "winterlint",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Runtime portability analyzer for modern JavaScript runtimes.",
   "type": "module",
   "main": "./dist/index.js",
@@ -37,7 +37,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "check": "npm run lint && npm run typecheck && npm run test",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run check && npm run build",
+    "release:dry-run": "npm pack --dry-run"
   },
   "keywords": [
     "runtime",
@@ -49,11 +51,6 @@
     "analysis"
   ],
   "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/example/winterlint.git"
-  },
-  "author": "",
   "dependencies": {
     "@babel/parser": "^7.28.0",
     "@babel/traverse": "^7.28.0",

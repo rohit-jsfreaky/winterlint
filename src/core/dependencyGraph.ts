@@ -1,6 +1,5 @@
 import path from 'node:path';
-import { readFile } from 'node:fs/promises';
-import { access } from 'node:fs/promises';
+import { readFile, access } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import { scanSourceFile } from './fileScanner.js';
 import { PackageSignal, SourceSignal, DependencyBlame } from '../types.js';
@@ -132,11 +131,12 @@ async function resolvePackagePath(depName: string, fromPackagePath: string, root
   return undefined;
 }
 
-async function analyzeDependencyEntry(packageName: string, packagePath: string, packageJson: PackageJson): Promise<SourceSignal | undefined> {
+async function analyzeDependencyEntry(packagePath: string, packageJson: PackageJson): Promise<SourceSignal | undefined> {
   const rawEntry = pickExportObjectPath(packageJson.exports) ?? packageJson.module ?? packageJson.main;
   if (!rawEntry) {
     return undefined;
   }
+
   const normalized = rawEntry.startsWith('./') ? rawEntry.slice(2) : rawEntry;
   const entryFile = path.join(packagePath, normalized);
   if (!(await exists(entryFile))) {
@@ -147,19 +147,42 @@ async function analyzeDependencyEntry(packageName: string, packagePath: string, 
   return scanSourceFile(entryFile, content);
 }
 
+function createBlame(rootProjectName: string, chain: string[], packageName: string, signal?: SourceSignal, exportPath?: string): DependencyBlame {
+  const base: DependencyBlame = {
+    rootProject: rootProjectName,
+    chain,
+    offendingPackage: packageName
+  };
+
+  if (signal?.filePath) {
+    base.offendingFile = signal.filePath;
+  }
+  if (exportPath) {
+    base.exportPath = exportPath;
+  }
+
+  return base;
+}
+
+async function readRootPackage(rootPackagePath: string): Promise<PackageJson> {
+  if (!(await exists(rootPackagePath))) {
+    return {};
+  }
+  return readJsonFile<PackageJson>(rootPackagePath);
+}
+
 export async function analyzeDependencies(rootPath: string, ignorePackages: Set<string>): Promise<DependencyAnalysis> {
   const rootPackagePath = path.join(rootPath, 'package.json');
-  const rootPackageJson = (await readJsonFile<PackageJson>(rootPackagePath)) ?? {};
+  const rootPackageJson = await readRootPackage(rootPackagePath);
   const rootProjectName = rootPackageJson.name ?? path.basename(rootPath);
 
   const packageSignals: PackageSignal[] = [];
   const fileSignals: DependencyFileSignal[] = [];
   const dependencyChains: DependencyBlame[] = [];
   const visited = new Set<string>();
-
   const rootDependencies = extractDeps(rootPackageJson);
 
-  const walk = async (depName: string, parentPackagePath: string, chain: string[]): Promise<void> => {
+  const walk = async (depName: string, parentPackagePath: string, chainFromRoot: string[]): Promise<void> => {
     if (ignorePackages.has(depName)) {
       return;
     }
@@ -182,19 +205,21 @@ export async function analyzeDependencies(rootPath: string, ignorePackages: Set<
 
     const packageJson = await readJsonFile<PackageJson>(packageJsonPath);
     const packageName = packageJson.name ?? depName;
-    const currentChain = [...chain, packageName];
+    const chain = [...chainFromRoot, packageName];
     const deps = extractDeps(packageJson);
 
+    const entryFile = pickExportObjectPath(packageJson.exports) ?? packageJson.module ?? packageJson.main;
     const signal: PackageSignal = {
       packageName,
       packagePath: depPackagePath,
       version: packageJson.version ?? '0.0.0',
       dependencies: deps,
-      entryFile: pickExportObjectPath(packageJson.exports) ?? packageJson.module ?? packageJson.main,
+      entryFile,
       exportsNodeOnly: exportsNodeOnly(packageJson.exports),
       isCommonJsOnly: isCommonJsOnly(packageJson),
       hasNativeAddonSignals: hasNativeAddonSignals(packageJson),
-      issues: []
+      issues: [],
+      chain
     };
 
     if (signal.exportsNodeOnly) {
@@ -209,31 +234,25 @@ export async function analyzeDependencies(rootPath: string, ignorePackages: Set<
 
     packageSignals.push(signal);
 
-    const entrySignal = await analyzeDependencyEntry(packageName, depPackagePath, packageJson);
+    const entrySignal = await analyzeDependencyEntry(depPackagePath, packageJson);
     if (entrySignal) {
       fileSignals.push({
         packageName,
         packagePath: depPackagePath,
-        chain: currentChain,
+        chain,
         signal: entrySignal
       });
     }
 
-    dependencyChains.push({
-      rootProject: rootProjectName,
-      chain: [rootProjectName, ...currentChain],
-      offendingPackage: packageName,
-      offendingFile: entrySignal?.filePath,
-      exportPath: signal.entryFile
-    });
+    dependencyChains.push(createBlame(rootProjectName, chain, packageName, entrySignal, entryFile));
 
     for (const nextDep of deps) {
-      await walk(nextDep, depPackagePath, currentChain);
+      await walk(nextDep, depPackagePath, chain);
     }
   };
 
   for (const depName of rootDependencies) {
-    await walk(depName, rootPath, []);
+    await walk(depName, rootPath, [rootProjectName]);
   }
 
   return {
@@ -243,3 +262,4 @@ export async function analyzeDependencies(rootPath: string, ignorePackages: Set<
     rootProjectName
   };
 }
+

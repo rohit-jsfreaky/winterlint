@@ -10,7 +10,7 @@ import { constants } from 'node:fs';
 import path from 'node:path';
 import { WinterlintConfig } from './types.js';
 
-const VERSION = '0.1.0';
+const VERSION = '1.0.0';
 
 interface AnalyzeCliOptions {
   file?: boolean;
@@ -93,7 +93,11 @@ async function runAnalyze(targetPath: string, options: AnalyzeCliOptions): Promi
     configOverrides.failOnWarning = options.failOnWarning;
   }
   if (options.maxIssues !== undefined) {
-    configOverrides.maxIssues = Number(options.maxIssues);
+    const parsedMaxIssues = Number(options.maxIssues);
+    if (!Number.isFinite(parsedMaxIssues) || parsedMaxIssues < 0) {
+      throw new Error('--max-issues must be a non-negative number');
+    }
+    configOverrides.maxIssues = Math.floor(parsedMaxIssues);
   }
 
   const result = await analyzeProject({
@@ -266,4 +270,5 @@ if (process.argv[1] && process.argv[1].endsWith('cli.js')) {
     process.exit(1);
   });
 }
+
 

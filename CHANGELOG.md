@@ -1,12 +1,16 @@
 # Changelog
 
+## 1.0.0
+
+- Production-ready 1.0 release
+- Hardened analyzer reliability for projects with or without `package.json`
+- Strict target resolution and clearer validation errors
+- Stronger dependency blame chain consistency from root project to offending package
+- Extended summary model with top offending packages and files
+- Improved pretty/markdown reports with richer summaries and config path visibility
+- Expanded tests for production hardening scenarios and CLI validation
+- CLI + library + optional ESLint scaffold + docs and release scripts
+
 ## 0.1.0
 
-- Initial release
-- CLI (`analyze`, `explain`, `list-rules`, `list-targets`, `init`)
-- Target-aware rule engine
-- Dependency graph and blame chains
-- Pretty/json/compact/markdown reporters
-- Programmatic API
-- Optional ESLint plugin scaffold
-- Unit/integration/matrix tests with fixtures
+- Initial pre-1.0 release

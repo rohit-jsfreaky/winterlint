@@ -54,4 +54,10 @@ describe('cli commands', () => {
 
     await rm(generated, { force: true });
   });
+  it('validates max-issues input', async () => {
+    const { stderr, result } = await captureIO(() => runCli(['analyze', fixturePath('edge-safe'), '--max-issues', '-2']));
+    expect(result).toBe(1);
+    expect(stderr).toContain('--max-issues must be a non-negative number');
+  });
 });
+

@@ -6,6 +6,22 @@ import { readJsonFile } from '../utils/fs.js';
 
 const CONFIG_CANDIDATES = ['winterlint.config.json', '.winterlintrc', '.winterlintrc.json'] as const;
 
+const KNOWN_CONFIG_KEYS = new Set([
+  'targets',
+  'include',
+  'exclude',
+  'ignorePatterns',
+  'disabledRules',
+  'enabledRules',
+  'severityOverrides',
+  'packageIgnoreList',
+  'allowlist',
+  'defaultReportFormat',
+  'maxIssues',
+  'failOnWarning',
+  'runtimeAssumptions'
+]);
+
 export const DEFAULT_CONFIG: WinterlintConfig = {
   targets: ['node', 'bun', 'deno', 'cloudflare-workers', 'vercel-edge', 'wintertc', 'winterjs'],
   include: ['**/*.{js,cjs,mjs,ts,tsx,jsx}'],
@@ -43,8 +59,7 @@ export async function discoverConfig(startDir: string): Promise<string | undefin
     if (await fileExists(packageJson)) {
       const packageData = await readJsonFile<{ winterlint?: WinterlintConfig }>(packageJson);
       if (packageData.winterlint) {
-        const virtualPath = `${packageJson}#winterlint`;
-        return virtualPath;
+        return `${packageJson}#winterlint`;
       }
     }
 
@@ -62,12 +77,21 @@ function isSeverity(value: unknown): value is Severity {
   return value === 'error' || value === 'warn' || value === 'info';
 }
 
+function validateKnownKeys(cfg: Record<string, unknown>): void {
+  const unknown = Object.keys(cfg).filter((key) => !KNOWN_CONFIG_KEYS.has(key));
+  if (unknown.length > 0) {
+    throw new Error(`Unknown winterlint config field(s): ${unknown.join(', ')}`);
+  }
+}
+
 export function validateConfig(input: unknown): WinterlintConfig {
   if (!input || typeof input !== 'object') {
     throw new Error('winterlint config must be an object');
   }
 
   const cfg = input as Record<string, unknown>;
+  validateKnownKeys(cfg);
+
   const normalized: WinterlintConfig = {
     ...DEFAULT_CONFIG
   };
@@ -102,7 +126,7 @@ export function validateConfig(input: unknown): WinterlintConfig {
     if (typeof cfg.maxIssues !== 'number' || Number.isNaN(cfg.maxIssues) || cfg.maxIssues < 0) {
       throw new Error('winterlint config field "maxIssues" must be a non-negative number');
     }
-    normalized.maxIssues = cfg.maxIssues;
+    normalized.maxIssues = Math.floor(cfg.maxIssues);
   }
 
   if (cfg.failOnWarning !== undefined) {
@@ -123,6 +147,7 @@ export function validateConfig(input: unknown): WinterlintConfig {
     if (!cfg.severityOverrides || typeof cfg.severityOverrides !== 'object' || Array.isArray(cfg.severityOverrides)) {
       throw new Error('winterlint config field "severityOverrides" must be an object');
     }
+
     const severityMap: Record<string, Severity> = {};
     for (const [ruleId, severity] of Object.entries(cfg.severityOverrides)) {
       if (!isSeverity(severity)) {
@@ -137,6 +162,7 @@ export function validateConfig(input: unknown): WinterlintConfig {
     if (!Array.isArray(cfg.allowlist)) {
       throw new Error('winterlint config field "allowlist" must be an array');
     }
+
     const entries = cfg.allowlist.map((entry, index) => {
       if (!entry || typeof entry !== 'object') {
         throw new Error(`allowlist[${index}] must be an object`);
@@ -145,12 +171,14 @@ export function validateConfig(input: unknown): WinterlintConfig {
       if (typeof value.ruleId !== 'string') {
         throw new Error(`allowlist[${index}].ruleId must be a string`);
       }
+
       return {
         ruleId: value.ruleId,
         path: typeof value.path === 'string' ? value.path : undefined,
         package: typeof value.package === 'string' ? value.package : undefined
       };
     });
+
     normalized.allowlist = entries;
   }
 
@@ -189,4 +217,3 @@ export async function loadConfig(startDir: string, explicitPath?: string): Promi
     path: resolvedPath
   };
 }
-

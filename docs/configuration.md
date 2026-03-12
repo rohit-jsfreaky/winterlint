@@ -2,6 +2,13 @@
 
 Create `winterlint.config.json` in your project root.
 
+`winterlint` discovers config in this order while traversing upward:
+
+1. `winterlint.config.json`
+2. `.winterlintrc`
+3. `.winterlintrc.json`
+4. `package.json#winterlint`
+
 ## Supported Fields
 
 - `targets: string[]`
@@ -17,6 +24,12 @@ Create `winterlint.config.json` in your project root.
 - `maxIssues: number`
 - `failOnWarning: boolean`
 - `runtimeAssumptions: Record<string, string | boolean>`
+
+## Validation behavior
+
+- Unknown config fields are rejected to prevent silent typos.
+- Invalid severity values fail fast.
+- `maxIssues` must be a non-negative number.
 
 ## Example
 
@@ -38,3 +51,12 @@ Create `winterlint.config.json` in your project root.
   "maxIssues": 50
 }
 ```
+
+## Runtime assumptions
+
+`runtimeAssumptions` can override target boolean capability flags for advanced setups.
+
+Examples:
+
+- Global override: `"supportsProcessGlobal": false`
+- Target-specific override: `"deno.supportsProcessGlobal": true`

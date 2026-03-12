@@ -125,6 +125,7 @@ export interface PackageSignal {
   isCommonJsOnly: boolean;
   hasNativeAddonSignals: boolean;
   issues: string[];
+  chain?: string[];
 }
 
 export interface AnalysisSummary {
@@ -132,6 +133,8 @@ export interface AnalysisSummary {
   bySeverity: Record<Severity, number>;
   byTarget: Record<RuntimeTargetId, number>;
   byCategory: Record<string, number>;
+  topOffendingPackages: Array<{ name: string; count: number }>;
+  topOffendingFiles: Array<{ path: string; count: number }>;
 }
 
 export interface RuntimeMatrix {
@@ -156,7 +159,6 @@ export interface WinterlintConfig {
   maxIssues?: number;
   failOnWarning?: boolean;
   runtimeAssumptions?: Record<string, string | boolean>;
-  customTargets?: RuntimeTarget[];
 }
 
 export interface AnalyzeOptions {
@@ -190,6 +192,7 @@ export interface AnalysisMetadata {
   version: string;
   targets: RuntimeTargetId[];
   configUsed: WinterlintConfig;
+  configPath?: string;
 }
 
 export interface AnalysisResult {
@@ -205,3 +208,6 @@ export interface ReportContext {
   result: AnalysisResult;
   rules: RuleMeta[];
 }
+
+
+
